@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model auth_code {
+  code_id Int     @id @default(autoincrement())
+  code    String? @db.VarChar(255)
+}
+
+model comments {
+  cmt_id  Int       @id @default(autoincrement())
+  user_id Int?
+  img_id  Int?
+  date    DateTime? @db.Date
+  content String?   @db.VarChar(255)
+  images  images?   @relation(fields: [img_id], references: [img_id], onDelete: Restrict, onUpdate: Restrict, map: "comments_img_id")
+  users   users?    @relation(fields: [user_id], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "comments_user_id")
+
+  @@index([img_id], map: "comments_img_id")
+  @@index([user_id], map: "comments_user_id")
+}
+
+model images {
+  img_id   Int        @id @default(autoincrement())
+  name     String     @db.VarChar(255)
+  url      String     @db.VarChar(500)
+  desc     String     @db.VarChar(500)
+  user_id  Int
+  comments comments[]
+  users    users      @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "img_user_id")
+  save_img save_img[]
+
+  @@index([user_id], map: "img_user_id")
+}
+
+model save_img {
+  id      Int       @id @default(autoincrement())
+  user_id Int?
+  img_id  Int?
+  date    DateTime? @db.Date
+  images  images?   @relation(fields: [img_id], references: [img_id], onDelete: Restrict, onUpdate: Restrict, map: "saveimg_img_id")
+  users   users?    @relation(fields: [user_id], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "saveimg_user_id")
+
+  @@index([img_id], map: "saveimg_img_id")
+  @@index([user_id], map: "saveimg_user_id")
+}
+
+model type_user {
+  type_id   Int     @id @default(autoincrement())
+  type_name String? @db.VarChar(255)
+  isAdmin   Int?
+  users     users[]
+}
+
+model users {
+  user_id   Int        @id @default(autoincrement())
+  email     String?    @db.VarChar(255)
+  password  String     @db.VarChar(255)
+  full_name String     @db.VarChar(255)
+  age       Int?
+  avatar    String?    @db.VarChar(255)
+  type      Int        @default(1)
+  comments  comments[]
+  images    images[]
+  save_img  save_img[]
+  type_user type_user  @relation(fields: [type], references: [type_id], onUpdate: Restrict, map: " type_user")
+
+  @@index([type], map: " type_user")
+}
